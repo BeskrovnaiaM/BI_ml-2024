@@ -32,7 +32,7 @@ class KNNClassifier:
         if n_loops == 0:
             distances = self.compute_distances_no_loops(X)
         elif n_loops == 1:
-            distances = self.compute_distances_one_loops(X)
+            distances = self.compute_distances_one_loop(X) # ошибка
         else:
             distances = self.compute_distances_two_loops(X)
         
@@ -102,8 +102,7 @@ class KNNClassifier:
            with distances between each test and each train sample
         """
 
-        num_test_samples = X.shape[0]
-        num_train_samples = self.train_X.shape[0]
+
         expanded_X = np.expand_dims(X, axis=1)
         expanded_train_X = np.expand_dims(self.train_X, axis=0)
         differences = np.abs(expanded_X - expanded_train_X)
@@ -124,10 +123,12 @@ class KNNClassifier:
            for every test sample
         """
         
-        n_train = distances.shape[1]
         n_test = distances.shape[0]
         num_prediction = np.zeros(n_test)
         matched_classes = np.zeros((n_test, self.k))
+        
+        
+        ##### сложновато сделано, можно проще  по аналогии с мультиклассовой!
         if self.k > 1:
             indices = np.argpartition(distances, self.k, axis = 1)[:, :self.k]
             for i in range(n_test):
@@ -160,15 +161,19 @@ class KNNClassifier:
            for every test sample
         """
 
-        n_train = distances.shape[0]
         n_test = distances.shape[0]
         prediction = np.zeros(n_test, np.int32)
         matched_classes = np.zeros((n_test, self.k))
+        
+        
         for i in range(n_test):
-            indices = np.argsort(distances[i])[:self.k] #да, я нашла аргсорт только дойдя до сюда, простите
+            indices = np.argsort(distances[i])[:self.k] #да, я нашла аргсорт только дойдя до сюда, простите - это вообще модно вынести из цикла и УЖЕ будет быстрее - векторизуй все что веторизуется
             matched_classes = self.train_y[indices]
+            
+            ############################################## Это можно сделать эффективнее 
             unique_classes, counts = np.unique(matched_classes, return_counts=True)
             predicted_class = unique_classes[np.argmax(counts)]
             prediction[i] = predicted_class
+            ##############################################
         
         return prediction
